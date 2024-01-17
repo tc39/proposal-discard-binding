@@ -1,4 +1,7 @@
-# 
+# `void` Discard Bindings for ECMAScript
+
+This proposal seeks to introduce to ECMAScript the use of `void` as a "discard" binding when used in place of a
+_BindingIdentifier_ or _Elision_ in numerous constructs.
 
 ## Status
 
@@ -13,6 +16,12 @@ _For more information see the [TC39 proposal process](https://tc39.es/process-do
 - Ron Buckton (@rbuckton)
 
 # Overview and Motivations
+
+TBD
+
+NOTE: `void` bindings were previously part of the
+[Explicit Resource Management](https://github.com/tc39/proposal-explicit-resource-management) proposal, and have been
+since moved here.
 
 # Prior Art
 
@@ -38,7 +47,43 @@ TBD
 
 # Examples
 
-TBD
+### `using` Declarations
+```js
+{
+  using void = new UniqueLock(mutex); // binding would otherwise be unused
+  ...
+} // lock is disposed
+```
+
+### Explicit Replacement for _Elision_ in Array Destructuring
+
+```js
+const [, a, , b] = ar; // skip using elision
+const [void, a, void, b] = ar; // skip using `void`
+
+const [a, b, , ] = iter; // exaust *three* elements from iterable
+const [a, b, void] = iter; // same, but with `void`
+```
+
+### Trigger Side-effects in Object Destructuring
+
+```js
+const { x: void, y } = obj; // reads 'x' before reading 'y'
+```
+
+### Explicit Elision in Extractors
+
+```js
+const Color(void, void, g) = c; // skip r and b components
+```
+
+### Discard Pattern for Pattern Matching
+
+```js
+match (obj) {
+  when { x: void, y: void }: usePoint(obj);
+}
+```
 
 # Related Proposals
 
