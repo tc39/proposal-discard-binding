@@ -316,6 +316,7 @@ match (obj) {
 
 - [Explicit Resource Management][] (Stage 3)
 - [Pattern Matching][] (Stage 1)
+- [Extractors][] (Stage 1)
 
 # TODO
 
