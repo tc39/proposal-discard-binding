@@ -262,7 +262,94 @@ A `void` discard in pattern matching would always succeed.
 
 # Grammar
 
-TBD
+The following is a tentative grammar for `void` discards:
+
+```diff grammarkdown
+  UnaryExpression[Yield, Await] :
+    UpdateExpression[?Yield, ?Await]
+    `delete` UnaryExpression[?Yield, ?Await]
+-   `void` UnaryExpression[?Yield, ?Await]
++   CoverVoidExpressionAndVoidDiscard[?Yield, ?Await]
+    `typeof` UnaryExpression[?Yield, ?Await]
+    `+` UnaryExpression[?Yield, ?Await]
+    `-` UnaryExpression[?Yield, ?Await]
+    `~` UnaryExpression[?Yield, ?Await]
+    `!` UnaryExpression[?Yield, ?Await]
+    [+Await] AwaitExpression[?Yield]
+
++ CoverVoidExpressionAndVoidDiscard[Yield, Await] :
++   `void` UnaryExpression[?Yield, ?Await]
++   `void`
+
+  LexicalBinding[In, Yield, Await, Pattern] : # see NOTE
+    BindingIdentifier[?Yield, ?Await] Initializer[?In, ?Yield, ?Await]?
+    [+Pattern] BindingPattern[?Yield, ?Await] Initializer[?In, ?Yield, ?Await]
++   [~Pattern] `void` Initializer[?In, ?Yield, ?Await]
+
+  BindingPattern[Yield, Await] :
+    ObjectBindingPattern[?Yield, ?Await]
+    ArrayBindingPattern[?Yield, ?Await]
++   `void`
+
+  DestructuringAssignmentTarget[Yield, Await] :
+    LeftHandSideExpression[?Yield, ?Await]
++   `void` # NOTE: may require a cover grammar
+```
+
+When procesing an instance of the production
+```diff grammarkdown
++ UnaryExpression[Yield, Await] : CoverVoidExpressionAndVoidDiscard[?Yield, ?Await]
+```
+the interpretation of _CoverVoidExpressionAndVoidDiscard_ is refined using the following grammar:
+```diff grammarkdown
++ VoidExpression[Yield, Await] :
++   `void` UnaryExpression[?Yield, ?Await]
+```
+
+The above grammar is intended to cover the following examples:
+```js
+var void = x;           // via: BindingPattern :: `void`
+var [void] = x;         // via: BindingPattern :: `void`
+var {x:void};           // via: BindingPattern :: `void`
+
+let void = x;           // via: BindingPattern :: `void`
+let [void] = x;         // via: BindingPattern :: `void`
+let {x:void};           // via: BindingPattern :: `void`
+
+const void = x;         // via: BindingPattern :: `void`
+const [void] = x;       // via: BindingPattern :: `void`
+const {x:void} = x;     // via: BindingPattern :: `void`
+
+function f(void) {}     // via: BindingPattern :: `void`
+function f([void]) {}   // via: BindingPattern :: `void`
+function f({x:void}) {} // via: BindingPattern :: `void`
+
+((void) => {});         // via: BindingPattern :: `void`
+(([void]) => {});       // via: BindingPattern :: `void`
+(({x:void}) => {});     // via: BindingPattern :: `void`
+
+using void = x;         // via: LexicalBinding : `void` Initializer
+await using void = x;   // via: LexicalBinding : `void` Initializer
+
+[void] = x;             // via: DestructuringAssignmentTarget : `void`
+({x:void} = x);         // via: DestructuringAssignmentTarget : `void`
+```
+
+Note that
+```js
+void = x;
+```
+is disallowed because `void` is not part of the refinement of _LeftHandSideExpression_ to _AssignmentPattern_ in 
+[13.15.5 Destructuring Assignment](https://tc39.es/ecma262/#sec-destructuring-assignment).
+
+Also note that
+```js
+const x = void;
+```
+is disallowed because `void` is not part of the refinement of _CoverVoidExpressionAndVoidDiscard_.
+
+> NOTE: The _LexicalBinding_ grammar is a diff from the proposed grammar for [Explicit Resource Management][], as found 
+> in the proposal diff here: https://arai-a.github.io/ecma262-compare/?pr=3000&id=sec-let-const-and-using-declarations
 
 <!--
 # API
