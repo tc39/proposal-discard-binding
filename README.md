@@ -357,6 +357,90 @@ is disallowed because `void` is not part of the refinement of _CoverVoidExpressi
 TBD
 -->
 
+# FAQ
+
+> Q. Wouldn't `{}` be sufficient? For example, `using {} = x` instead of `using void = x`?
+
+No, `{}` is not sufficient for multiple reasons. First, `using` declarations do not permit the use of binding patterns,
+so `{}` is not legal in that context. Second, `{}` requires that the right-hand side be neither `null` nor `undefined`.
+Not only do `using` declarations expressly allow the use of `null` and `undefined` as resources, but any value you might
+want to discard from a binding could potentially be either `null` or `undefined`.
+
+> Q. Why use the `void` keyword? Why not use another keyword or a new token?
+
+The syntax space within ECMAScript is fairly limited. Many operator-like tokens already have a well defined semantic 
+meaning that do not align with the concept of a "discard". We cannot introduce a new keyword as it could potentially
+conflict with existing identifiers, and there is well-established guidance that proposals should not introduce such
+conflicts. That leaves us with a limited set of established keywords that we could repurpose for this use without
+conflicting with their other use. Since it is a good practice for a keyword to maintain a consistent semantic meaning in
+all contexts, we chose `void` as it remains consistent with how `void` is already used in the language. A `void`
+_expression_ evaluates its operand and discards the result. A `void` _binding_ would evaluate its _Initializer_, read
+from its associated property, or read an element from an iterator, and then _also_ discards the result.
+
+That said, we welcome additional suggestions that align with these principles.
+
+> Q. Why does pattern matching need discards?
+
+One of the main benefits of pattern matching is to be able to execute conditional logic based on the _shape_ of your
+input. For example:
+
+```
+match (p) {
+  when { x: number, y: Number }: print("p is a point");
+}
+```
+
+In this example, the pattern matches against `p` when it has both `x` and `y` properties and when the values for
+both properties are are `Number` values. But how would you test for property existance *without* caring about its type?
+Without a "discard" pattern, you're left with a number of poor options.
+
+You could match a property using both a condition and its complement:
+```js
+match (p) {
+  when { x: null or not null, y: null or not null }: ...;
+}
+```
+However, this is very wordy and not very discoverable.
+
+You could match a property and introduce a temporary variable:
+```js
+match (p) {
+  when { x: let _, y: let _ }: ...;
+}
+```
+However, this introduces another unnecessary temporary variable and is again not very discoverable.
+
+Finally, you could introduce a custom matcher:
+```js
+const Discard = {
+  [Symbol.matcher](_value) {
+    return true;
+  }
+};
+
+match (p) {
+  when { x: Discard, y: Discard }: ...;
+}
+```
+However, this introduces additional overhead as you must evaluate user code.
+
+Instead, `void` patterns are both discoverable, due to their consistent semantic menaing, and do not have runtime
+overhead from evaluating user code:
+```js
+match (p) {
+  when { x: void, y: void }: ...;
+}
+```
+
+As pattern matching is still at Stage 1, its possible it could choose to implement `void` discards purely as bindings
+using `let` patterns:
+```js
+match (p) {
+  when { x: let void, y: let void }: ...;
+}
+```
+In either case, the semantic meaning would remain consistent.
+
 # Examples
 
 ### `using` Declarations
