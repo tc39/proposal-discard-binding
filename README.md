@@ -5,7 +5,7 @@ _BindingIdentifier_ or _Elision_ in numerous constructs.
 
 ## Status
 
-**Stage:** 0  \
+**Stage:** 1  \
 **Champion:** Ron Buckton (@rbuckton)  \
 **Last Presented:** (none)
 
@@ -60,6 +60,8 @@ There are a number of potential use cases for "discard" bindings that this propo
   - [Wildcard (`_`)](https://doc.rust-lang.org/reference/patterns.html#wildcard-pattern)
 - Go:
   - [Blank Identifier (`_`)](https://go.dev/doc/effective_go#blank)
+- 🆕 Java:
+  - [Unnamed variables & patterns](https://openjdk.org/jeps/456)
 
 # Syntax
 
@@ -86,25 +88,15 @@ using void = new UniqueLock(mutex);
 
 ### `var`/`let`/`const` Declarations
 
-Discard bindings are seemingly less useful in `var`/`let`/`const` declarations outside of binding patterns:
+Discard bindings would not be supported at the top level of `var`/`let`/`const` declarations.
 ```js
-const void = bar();
+const void = bar(); // syntax error
 ```
-
-However, they could potentially be used to inject in-situ expression evaluation without resorting to `()` and `,`:
-```js
-const a = foo(), b = (bar(), baz()); // before
-const a = foo(), void = bar(), b = baz(); // after
-```
-
-Despite its limited utility in these cases, this proposal currently intends to support discards in `var`/`let`/`const`
-mostly for the sake of consistency with `using void`.
 
 ## Object Binding and Assignment Patterns
 
-Unlike top-level bindings for `var`/`let`/`const`, `void` discard bindings in binding patterns have far more utility.
-For object binding patterns, a `void` discard binding has the benefit of allowing developers to explicitly exclude
-properties from rest bindings (`...`) without needing to introduce throw-away temporary variables for that purpose:
+For object binding patterns, a discard binding has the benefit of allowing developers to explicitly exclude properties
+from rest bindings (`...`) without needing to introduce throw-away temporary variables for that purpose:
 
 ```js
 const { z: void, ...obj1 } = { x: 1, y: 2, z: 3 };
@@ -223,20 +215,11 @@ discards within the language.
 
 ## Other Forms
 
-### Bindingless `catch`
+### `catch` Clauses
 
-One final use case we are considering is an explicit discard marker for bindingless `catch` clauses:
-
-```js
-try {
-}
-catch (void) {
-}
-```
-
-However, this is a very low priority case given that bindingless `catch` already exists and its adoption did not face
-the same complexities as other bindingless forms have, since `catch` could simply elide the `()` portion of the clause.
-Explicit discards for `catch` are included here purely for consistency with other discard forms.
+This proposal is not actively pursuing discard bindings for `catch` clauses as bindingless `catch` already exists and
+its adoption did not face the same complexities as other bindingless forms have, since `catch` could simply elide the
+`()` portion of the clause.
 
 ### Imports and Exports
 
@@ -262,61 +245,17 @@ A `void` discard in pattern matching would always succeed.
 
 # Grammar
 
-The following is a tentative grammar for `void` discards:
+Please refer to the [specification text](https://tc39.es/proposal-discard-binding) for the formal grammar for this
+proposal.
 
-```diff grammarkdown
-  UnaryExpression[Yield, Await] :
-    UpdateExpression[?Yield, ?Await]
-    `delete` UnaryExpression[?Yield, ?Await]
--   `void` UnaryExpression[?Yield, ?Await]
-+   CoverVoidExpressionAndVoidDiscard[?Yield, ?Await]
-    `typeof` UnaryExpression[?Yield, ?Await]
-    `+` UnaryExpression[?Yield, ?Await]
-    `-` UnaryExpression[?Yield, ?Await]
-    `~` UnaryExpression[?Yield, ?Await]
-    `!` UnaryExpression[?Yield, ?Await]
-    [+Await] AwaitExpression[?Yield]
-
-+ CoverVoidExpressionAndVoidDiscard[Yield, Await] :
-+   `void` UnaryExpression[?Yield, ?Await]
-+   `void`
-
-  LexicalBinding[In, Yield, Await, Pattern] : # see NOTE
-    BindingIdentifier[?Yield, ?Await] Initializer[?In, ?Yield, ?Await]?
-    [+Pattern] BindingPattern[?Yield, ?Await] Initializer[?In, ?Yield, ?Await]
-+   [~Pattern] `void` Initializer[?In, ?Yield, ?Await]
-
-  BindingPattern[Yield, Await] :
-    ObjectBindingPattern[?Yield, ?Await]
-    ArrayBindingPattern[?Yield, ?Await]
-+   `void`
-
-  DestructuringAssignmentTarget[Yield, Await] :
-    LeftHandSideExpression[?Yield, ?Await]
-+   `void` # NOTE: may require a cover grammar
-```
-
-When procesing an instance of the production
-```diff grammarkdown
-+ UnaryExpression[Yield, Await] : CoverVoidExpressionAndVoidDiscard[?Yield, ?Await]
-```
-the interpretation of _CoverVoidExpressionAndVoidDiscard_ is refined using the following grammar:
-```diff grammarkdown
-+ VoidExpression[Yield, Await] :
-+   `void` UnaryExpression[?Yield, ?Await]
-```
-
-The above grammar is intended to cover the following examples:
+The proposed grammar is intended to cover the following examples:
 ```js
-var void = x;           // via: BindingPattern :: `void`
 var [void] = x;         // via: BindingPattern :: `void`
 var {x:void};           // via: BindingPattern :: `void`
 
-let void = x;           // via: BindingPattern :: `void`
 let [void] = x;         // via: BindingPattern :: `void`
 let {x:void};           // via: BindingPattern :: `void`
 
-const void = x;         // via: BindingPattern :: `void`
 const [void] = x;       // via: BindingPattern :: `void`
 const {x:void} = x;     // via: BindingPattern :: `void`
 
@@ -502,7 +441,7 @@ The following is a high-level list of tasks to progress through each stage of th
 
 ### Stage 2 Entrance Criteria
 
-* [ ] [Initial specification text][Specification].
+* [x] [Initial specification text][Specification].
 * [ ] [Transpiler support][Transpiler] (_Optional_).
 
 ### Stage 2.7 Entrance Criteria
