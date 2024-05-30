@@ -88,12 +88,6 @@ contributors: Ron Buckton, Ecma International
       <emu-alg>
         1. Return the BoundNames of |BindingPattern|.
       </emu-alg>
-      <ins class="block">
-      <emu-grammar>BindingPattern : `void`</emu-grammar>
-      <emu-alg>
-        1. Return a new empty List.
-      </emu-alg>
-      </ins>
       <emu-grammar>ObjectBindingPattern : `{` `}`</emu-grammar>
       <emu-alg>
         1. Return a new empty List.
@@ -150,6 +144,12 @@ contributors: Ron Buckton, Ecma International
       <emu-alg>
         1. Return the BoundNames of |BindingPattern|.
       </emu-alg>
+      <ins class="block">
+      <emu-grammar>BindingElement : `void`</emu-grammar>
+      <emu-alg>
+        1. Return a new empty List.
+      </emu-alg>
+      </ins>
       <emu-grammar>ForDeclaration : LetOrConst ForBinding</emu-grammar>
       <emu-alg>
         1. Return the BoundNames of |ForBinding|.
@@ -295,58 +295,6 @@ contributors: Ron Buckton, Ecma International
     </emu-clause>
   </emu-clause>
 
-  <emu-clause id="sec-syntax-directed-operations-function-name-inference" number="4">
-    <h1>Function Name Inference</h1>
-
-    <emu-clause id="sec-static-semantics-isidentifierref" oldids="sec-semantics-static-semantics-isidentifierref,sec-static-semantics-static-semantics-isidentifierref" type="sdo" number="4">
-      <h1>Static Semantics: IsIdentifierRef ( ): a Boolean</h1>
-      <dl class="header">
-      </dl>
-      <emu-grammar>PrimaryExpression : IdentifierReference</emu-grammar>
-      <emu-alg>
-        1. Return *true*.
-      </emu-alg>
-      <emu-grammar>
-        PrimaryExpression :
-          `this`
-          Literal
-          ArrayLiteral
-          ObjectLiteral
-          FunctionExpression
-          ClassExpression
-          GeneratorExpression
-          AsyncFunctionExpression
-          AsyncGeneratorExpression
-          RegularExpressionLiteral
-          TemplateLiteral
-          CoverParenthesizedExpressionAndArrowParameterList
-
-        MemberExpression :
-          MemberExpression `[` Expression `]`
-          MemberExpression `.` IdentifierName
-          MemberExpression TemplateLiteral
-          SuperProperty
-          MetaProperty
-          `new` MemberExpression Arguments
-          MemberExpression `.` PrivateIdentifier
-
-        NewExpression :
-          `new` NewExpression
-
-        LeftHandSideExpression :
-          CallExpression
-          OptionalExpression
-        <ins class="block">
-        DestructuringAssignmentTarget :
-          `void`
-        </ins>
-      </emu-grammar>
-      <emu-alg>
-        1. Return *false*.
-      </emu-alg>
-    </emu-clause>
-  </emu-clause>
-
   <emu-clause id="sec-syntax-directed-operations-miscellaneous" number="6">
     <h1>Miscellaneous</h1>
     <emu-clause id="sec-runtime-semantics-bindinginitialization" oldids="sec-identifiers-runtime-semantics-bindinginitialization,sec-destructuring-binding-patterns-runtime-semantics-bindinginitialization" type="sdo">
@@ -386,12 +334,6 @@ contributors: Ron Buckton, Ecma International
         1. If _iteratorRecord_.[[Done]] is *false*, return ? IteratorClose(_iteratorRecord_, _result_).
         1. Return ? _result_.
       </emu-alg>
-      <ins class="block">
-      <emu-grammar>BindingPattern : `void`</emu-grammar>
-      <emu-alg>
-        1. Return ~unused~.
-      </emu-alg>
-      </ins>
       <emu-grammar>ObjectBindingPattern : `{` `}`</emu-grammar>
       <emu-alg>
         1. Return ~unused~.
@@ -422,79 +364,280 @@ contributors: Ron Buckton, Ecma International
 <emu-clause id="sec-ecmascript-language-expressions" number="13">
   <h1>ECMAScript Language: Expressions</h1>
 
-  <emu-clause id="sec-unary-operators" number="5">
-    <h1>Unary Operators</h1>
-    <h2>Syntax</h2>
-    <emu-grammar type="definition">
-      UnaryExpression[Yield, Await] :
-        UpdateExpression[?Yield, ?Await]
-        `delete` UnaryExpression[?Yield, ?Await]
-        <del>`void` UnaryExpression[?Yield, ?Await]</del>
-        <ins>CoverVoidExpressionAndVoidDiscard[?Yield, ?Await]</ins>
-        `typeof` UnaryExpression[?Yield, ?Await]
-        `+` UnaryExpression[?Yield, ?Await]
-        `-` UnaryExpression[?Yield, ?Await]
-        `~` UnaryExpression[?Yield, ?Await]
-        `!` UnaryExpression[?Yield, ?Await]
-        [+Await] CoverAwaitExpressionAndAwaitUsingDeclarationHead[?Yield] #awaitusingcover
+  <emu-clause id="sec-primary-expression" number="2">
+    <h1>Primary Expression</h1>
 
-      CoverAwaitExpressionAndAwaitUsingDeclarationHead[Yield] :
-        `await` UnaryExpression[?Yield, +Await]
-
-      <ins class="block">
-      CoverVoidExpressionAndVoidDiscard[Yield, Await] :
-        `void` UnaryExpression[?Yield, ?Await]?
-      </ins>
-    </emu-grammar>
-
-    <emu-clause id="sec-void-operator" number="2">
-      <h1>The `void` Operator</h1>
-
-      <ins class="block">
-      <h2>Supplemental Syntax</h2>
-      <p>
-        In certain circumstances when processing an instance of the production<br>
-        <emu-grammar>UnaryExpression : CoverVoidExpressionAndVoidDiscard</emu-grammar><br>
-        the interpretation of |CoverVoidExpressionAndVoidDiscard| is refined using the following grammar:
-      </p>
+    <emu-clause id="sec-array-initializer" number="4">
+      <h1>Array Initializer</h1>
+      <emu-note>
+        <p>An |ArrayLiteral| is an expression describing the initialization of an Array, using a list, of zero or more expressions each of which represents an array element, enclosed in square brackets. The elements need not be literals; they are evaluated each time the array initializer is evaluated.</p>
+      </emu-note>
+      <p>Array elements may be elided at the beginning, middle or end of the element list. Whenever a comma in the element list is not preceded by an |AssignmentExpression| (i.e., a comma at the beginning or after another comma), the missing array element contributes to the length of the Array and increases the index of subsequent elements. Elided array elements are not defined. If an element is elided at the end of an array, that element does not contribute to the length of the Array.</p>
+      <h2>Syntax</h2>
       <emu-grammar type="definition">
-        VoidExpression[Yield, Await] :
-          `void` UnaryExpression[?Yield, ?Await]
+        ArrayLiteral[Yield, Await] :
+          `[` Elision? `]`
+          `[` ElementList[?Yield, ?Await] `]`
+          `[` ElementList[?Yield, ?Await] `,` Elision? `]`
+
+        ElementList[Yield, Await] :
+          Elision? AssignmentExpression[+In, ?Yield, ?Await]</del>
+          Elision? SpreadElement[?Yield, ?Await]
+          <ins>CoverDiscardElement</ins>
+          ElementList[?Yield, ?Await] `,` Elision? AssignmentExpression[+In, ?Yield, ?Await]
+          ElementList[?Yield, ?Await] `,` Elision? SpreadElement[?Yield, ?Await]
+          <ins>ElementList[?Yield, ?Await] `,` CoverDiscardElement</ins>
+
+        Elision :
+          `,`
+          Elision `,`
+
+        SpreadElement[Yield, Await] :
+          `...` AssignmentExpression[+In, ?Yield, ?Await]
+
+        <ins>
+        CoverDiscardElement :
+          Elision? `void`
+        </ins>
       </emu-grammar>
+      <ins class="block">
+      <emu-note>
+        <p>In certain contexts, |ArrayLiteral| is used as a cover grammar for a more restricted secondary grammar. The |CoverDiscardElement| production is necessary to fully cover these secondary grammars. However, use of this production results in an early Syntax Error in normal contexts where an actual |ArrayLiteral| is expected.</p>
+      </emu-note>
+
+      <emu-clause id="sec-array-initializer-static-semantics-early-errors">
+        <h1>Static Semantics: Early Errors</h1>
+        <p>In addition to describing an actual array initializer the |ArrayLiteral| productions are also used as a cover grammar for |ArrayAssignmentPattern| and may be recognized as part of a |CoverParenthesizedExpressionAndArrowParameterList|. When |ArrayLiteral| appears in a context where |ArrayAssignmentPattern| is required the following Early Error rules are <b>not</b> applied. In addition, they are not applied when initially parsing a |CoverParenthesizedExpressionAndArrowParameterList| or |CoverCallExpressionAndAsyncArrowHead|.</p>
+        <emu-grammar>CoverDiscardElement : Elision? `void`</emu-grammar>
+        <ul>
+          <li>
+            It is a Syntax Error if any source text is matched by this produciton.
+          </li>
+        </ul>
+        <emu-note>
+          <p>This production exists so that |ArrayLiteral| can serve as a cover grammar for |ArrayAssignmentPattern|. It cannot occur in an actual array initializer.</p>
+        </emu-note>
+      </emu-clause>
       </ins>
 
-      <emu-clause id="sec-void-operator-runtime-semantics-evaluation" type="sdo">
-        <h1>Runtime Semantics: Evaluation</h1>
+    </emu-clause>
+
+    <emu-clause id="sec-object-initializer">
+      <h1>Object Initializer</h1>
+      <emu-note>
+        <p>An object initializer is an expression describing the initialization of an Object, written in a form resembling a literal. It is a list of zero or more pairs of property keys and associated values, enclosed in curly brackets. The values need not be literals; they are evaluated each time the object initializer is evaluated.</p>
+      </emu-note>
+      <h2>Syntax</h2>
+      <emu-grammar type="definition">
+        ObjectLiteral[Yield, Await] :
+          `{` `}`
+          `{` PropertyDefinitionList[?Yield, ?Await] `}`
+          `{` PropertyDefinitionList[?Yield, ?Await] `,` `}`
+
+        PropertyDefinitionList[Yield, Await] :
+          PropertyDefinition[?Yield, ?Await]
+          PropertyDefinitionList[?Yield, ?Await] `,` PropertyDefinition[?Yield, ?Await]
+
+        PropertyDefinition[Yield, Await] :
+          IdentifierReference[?Yield, ?Await]
+          CoverInitializedName[?Yield, ?Await]
+          PropertyName[?Yield, ?Await] `:` AssignmentExpression[+In, ?Yield, ?Await]
+          <ins>CoverDiscardProperty[?Yield, ?Await]</ins>
+          MethodDefinition[?Yield, ?Await]
+          `...` AssignmentExpression[+In, ?Yield, ?Await]
+
+        PropertyName[Yield, Await] :
+          LiteralPropertyName
+          ComputedPropertyName[?Yield, ?Await]
+
+        LiteralPropertyName :
+          IdentifierName
+          StringLiteral
+          NumericLiteral
+
+        ComputedPropertyName[Yield, Await] :
+          `[` AssignmentExpression[+In, ?Yield, ?Await] `]`
+
+        CoverInitializedName[Yield, Await] :
+          IdentifierReference[?Yield, ?Await] Initializer[+In, ?Yield, ?Await]
+
+        <ins>
+        CoverDiscardProperty[Yield, Await] :
+          PropertyName[?Yield, ?Await] `:` `void`
+        </ins>
+
+        Initializer[In, Yield, Await] :
+          `=` AssignmentExpression[?In, ?Yield, ?Await]
+      </emu-grammar>
+      <emu-note>
+        <p>|MethodDefinition| is defined in <emu-xref href="#sec-method-definitions"></emu-xref>.</p>
+      </emu-note>
+      <emu-note>
+        <p>In certain contexts, |ObjectLiteral| is used as a cover grammar for a more restricted secondary grammar. The |CoverInitializedName| <del>production is</del><ins> and |CoverDiscardProperty| productions are</ins> necessary to fully cover these secondary grammars. However, use of <del>this production</del><ins>these productions</ins> results in an early Syntax Error in normal contexts where an actual |ObjectLiteral| is expected.</p>
+      </emu-note>
+
+      <emu-clause id="sec-object-initializer-static-semantics-early-errors" oldids="sec-__proto__-property-names-in-object-initializers">
+        <h1>Static Semantics: Early Errors</h1>
+        <emu-grammar>PropertyDefinition : MethodDefinition</emu-grammar>
+        <ul>
+          <li>
+            It is a Syntax Error if HasDirectSuper of |MethodDefinition| is *true*.
+          </li>
+          <li>
+            It is a Syntax Error if the PrivateBoundIdentifiers of |MethodDefinition| is not empty.
+          </li>
+        </ul>
+        <p>In addition to describing an actual object initializer the |ObjectLiteral| productions are also used as a cover grammar for |ObjectAssignmentPattern| and may be recognized as part of a |CoverParenthesizedExpressionAndArrowParameterList|. When |ObjectLiteral| appears in a context where |ObjectAssignmentPattern| is required the following Early Error rules are <b>not</b> applied. In addition, they are not applied when initially parsing a |CoverParenthesizedExpressionAndArrowParameterList| or |CoverCallExpressionAndAsyncArrowHead|.</p>
+        <emu-grammar>PropertyDefinition : CoverInitializedName</emu-grammar>
+        <ul>
+          <li>
+            It is a Syntax Error if any source text is matched by this production.
+          </li>
+        </ul>
+        <emu-note>
+          <p>This production exists so that |ObjectLiteral| can serve as a cover grammar for |ObjectAssignmentPattern|. It cannot occur in an actual object initializer.</p>
+        </emu-note>
         <ins class="block">
-        <emu-grammar>
-            UnaryExpression : CoverVoidExpressionAndVoidDiscard
-        </emu-grammar>
-        <emu-alg>
-          1. Let _voidExpr_ be the |VoidExpression| that is covered by |CoverVoidExpressionAndVoidDiscard|.
-          1. Let _expr_ be ? Evaluation of _voidExpr_.
-          1. Perform ? GetValue(_expr_).
-          1. Return *undefined*.
-        </emu-alg>
+        <emu-grammar>PropertyDefinition : CoverDiscardProperty</emu-grammar>
+        <ul>
+          <li>
+            It is a Syntax Error if any source text is matched by this production.
+          </li>
+        </ul>
+        <emu-note>
+          <p>This production exists so that |ObjectLiteral| can serve as a cover grammar for |ObjectAssignmentPattern|. It cannot occur in an actual object initializer.</p>
+        </emu-note>
         </ins>
         <emu-grammar>
-          <del class="block">UnaryExpression : `void` UnaryExpression</del>
-          <ins class="block">VoidExpression : `void` UnaryExpression</ins>
+          ObjectLiteral :
+            `{` PropertyDefinitionList `}`
+            `{` PropertyDefinitionList `,` `}`
         </emu-grammar>
-        <emu-alg>
-          1. Let _expr_ be ? Evaluation of |UnaryExpression|.
-          1. Perform ? GetValue(_expr_).
-          1. Return *undefined*.
-        </emu-alg>
+        <ul>
+          <li>
+            It is a Syntax Error if the PropertyNameList of |PropertyDefinitionList| contains any duplicate entries for *"__proto__"* and at least two of those entries were obtained from productions of the form <emu-grammar>PropertyDefinition : PropertyName `:` AssignmentExpression</emu-grammar>. This rule is not applied if this |ObjectLiteral| is contained within a |Script| that is being parsed for JSON.parse (see step <emu-xref href="#step-json-parse-parse"></emu-xref> of <emu-xref href="#sec-json.parse">JSON.parse</emu-xref>).
+          </li>
+        </ul>
         <emu-note>
-          <p>GetValue must be called even though its value is not used because it may have observable side-effects.</p>
+          <p>The List returned by PropertyNameList does not include property names defined using a |ComputedPropertyName|.</p>
         </emu-note>
       </emu-clause>
     </emu-clause>
   </emu-clause>
 
+  <emu-clause id="sec-left-hand-side-expressions">
+    <h1>Left-Hand-Side Expressions</h1>
+    <h2>Syntax</h2>
+    <emu-grammar type="definition">
+      MemberExpression[Yield, Await] :
+        PrimaryExpression[?Yield, ?Await]
+        MemberExpression[?Yield, ?Await] `[` Expression[+In, ?Yield, ?Await] `]`
+        MemberExpression[?Yield, ?Await] `.` IdentifierName
+        MemberExpression[?Yield, ?Await] TemplateLiteral[?Yield, ?Await, +Tagged]
+        SuperProperty[?Yield, ?Await]
+        MetaProperty
+        `new` MemberExpression[?Yield, ?Await] Arguments[?Yield, ?Await]
+        MemberExpression[?Yield, ?Await] `.` PrivateIdentifier
+
+      SuperProperty[Yield, Await] :
+        `super` `[` Expression[+In, ?Yield, ?Await] `]`
+        `super` `.` IdentifierName
+
+      MetaProperty :
+        NewTarget
+        ImportMeta
+
+      NewTarget :
+        `new` `.` `target`
+
+      ImportMeta :
+        `import` `.` `meta`
+
+      NewExpression[Yield, Await] :
+        MemberExpression[?Yield, ?Await]
+        `new` NewExpression[?Yield, ?Await]
+
+      CallExpression[Yield, Await] :
+        CoverCallExpressionAndAsyncArrowHead[?Yield, ?Await] #callcover
+        SuperCall[?Yield, ?Await]
+        ImportCall[?Yield, ?Await]
+        CallExpression[?Yield, ?Await] Arguments[?Yield, ?Await]
+        CallExpression[?Yield, ?Await] `[` Expression[+In, ?Yield, ?Await] `]`
+        CallExpression[?Yield, ?Await] `.` IdentifierName
+        CallExpression[?Yield, ?Await] TemplateLiteral[?Yield, ?Await, +Tagged]
+        CallExpression[?Yield, ?Await] `.` PrivateIdentifier
+
+      SuperCall[Yield, Await] :
+        `super` Arguments[?Yield, ?Await]
+
+      ImportCall[Yield, Await] :
+        `import` `(` AssignmentExpression[+In, ?Yield, ?Await] `)`
+
+      Arguments[Yield, Await] :
+        `(` `)`
+        `(` ArgumentList[?Yield, ?Await] `)`
+        `(` ArgumentList[?Yield, ?Await] `,` `)`
+
+      ArgumentList[Yield, Await] :
+        AssignmentExpression[+In, ?Yield, ?Await]
+        `...` AssignmentExpression[+In, ?Yield, ?Await]
+        <ins>CoverDiscardArgument</ins>
+        ArgumentList[?Yield, ?Await] `,` AssignmentExpression[+In, ?Yield, ?Await]
+        ArgumentList[?Yield, ?Await] `,` `...` AssignmentExpression[+In, ?Yield, ?Await]
+        <ins>ArgumentList[?Yield, ?Await] `,` CoverDiscardArgument</ins>
+
+      OptionalExpression[Yield, Await] :
+        MemberExpression[?Yield, ?Await] OptionalChain[?Yield, ?Await]
+        CallExpression[?Yield, ?Await] OptionalChain[?Yield, ?Await]
+        OptionalExpression[?Yield, ?Await] OptionalChain[?Yield, ?Await]
+
+      OptionalChain[Yield, Await] :
+        `?.` Arguments[?Yield, ?Await]
+        `?.` `[` Expression[+In, ?Yield, ?Await] `]`
+        `?.` IdentifierName
+        `?.` TemplateLiteral[?Yield, ?Await, +Tagged]
+        `?.` PrivateIdentifier
+        OptionalChain[?Yield, ?Await] Arguments[?Yield, ?Await]
+        OptionalChain[?Yield, ?Await] `[` Expression[+In, ?Yield, ?Await] `]`
+        OptionalChain[?Yield, ?Await] `.` IdentifierName
+        OptionalChain[?Yield, ?Await] TemplateLiteral[?Yield, ?Await, +Tagged]
+        OptionalChain[?Yield, ?Await] `.` PrivateIdentifier
+
+      LeftHandSideExpression[Yield, Await] :
+        NewExpression[?Yield, ?Await]
+        CallExpression[?Yield, ?Await]
+        OptionalExpression[?Yield, ?Await]
+    </emu-grammar>
+
+    <ins class="block">
+      <emu-note>
+        <p>In certain contexts, |Arguments| is used as a cover grammar for a more restricted secondary grammar. The |CoverDiscardArgument| production is necessary to fully cover these secondary grammars. However, use of this production results in an early Syntax Error in normal contexts where an actual |Arguments| is expected.</p>
+      </emu-note>
+      <emu-note>
+        <p>DRAFT NOTE: The above changes are only applied when considering how this proposal interacts with the <a href="https://github.com/tc39/proposal-extractors">Extractors</a> proposal.</p>
+      </emu-note>
+
+    <emu-clause id="sec-array-initializer-static-semantics-early-errors">
+      <h1>Static Semantics: Early Errors</h1>
+      <p>In addition to describing an actual arguments list the |Arguments| productions are also used as a cover grammar for |ExtractorAssignmentPattern| and may be recognized as part of a |CoverParenthesizedExpressionAndArrowParameterList|. When |Arguments| appears in a context where |ExtractorAssignmentPattern| is required the following Early Error rules are <b>not</b> applied. In addition, they are not applied when initially parsing a |CoverParenthesizedExpressionAndArrowParameterList| or |CoverCallExpressionAndAsyncArrowHead|.</p>
+      <emu-grammar>CoverDiscardArgument : Elision? `void`</emu-grammar>
+      <ul>
+        <li>
+          It is a Syntax Error if any source text is matched by this produciton.
+        </li>
+      </ul>
+      <emu-note>
+        <p>This production exists so that |Arguments| can serve as a cover grammar for |ExtractorAssignmentPattern|. It cannot occur in an actual arguments list.</p>
+      </emu-note>
+      <emu-note>
+        <p>DRAFT NOTE: The above changes are only applied when considering how this proposal interacts with the <a href="https://github.com/tc39/proposal-extractors">Extractors</a> proposal.</p>
+      </emu-note>
+      </emu-clause>
+    </ins>
+  </emu-clause>
+
   <emu-clause id="sec-assignment-operators" number="15">
     <h1>Assignment Operators</h1>
-
 
     <emu-clause id="sec-destructuring-assignment" number="5">
       <h1>Destructuring Assignment</h1>
@@ -540,39 +683,14 @@ contributors: Ron Buckton, Ecma International
 
         AssignmentElement[Yield, Await] :
           DestructuringAssignmentTarget[?Yield, ?Await] Initializer[+In, ?Yield, ?Await]?
+          <ins>`void`</ins>
 
         AssignmentRestElement[Yield, Await] :
           `...` DestructuringAssignmentTarget[?Yield, ?Await]
 
         DestructuringAssignmentTarget[Yield, Await] :
           LeftHandSideExpression[?Yield, ?Await]
-          <ins>`void`</ins>
       </emu-grammar>
-
-      <emu-clause id="sec-destructuring-assignment-static-semantics-early-errors" number="1">
-        <h1>Static Semantics: Early Errors</h1>
-        <emu-grammar>AssignmentProperty : IdentifierReference Initializer?</emu-grammar>
-        <ul>
-          <li>
-            It is a Syntax Error if AssignmentTargetType of |IdentifierReference| is not ~simple~.
-          </li>
-        </ul>
-        <emu-grammar>AssignmentRestProperty : `...` DestructuringAssignmentTarget</emu-grammar>
-        <ul>
-          <li>
-            It is a Syntax Error if |DestructuringAssignmentTarget| is either an |ArrayLiteral|<del> or</del><ins>,</ins> an |ObjectLiteral|<ins>, or `void`</ins>.
-          </li>
-        </ul>
-        <emu-grammar>DestructuringAssignmentTarget : LeftHandSideExpression</emu-grammar>
-        <ul>
-          <li>
-            If |LeftHandSideExpression| is either an |ObjectLiteral| or an |ArrayLiteral|, |LeftHandSideExpression| must cover an |AssignmentPattern|.
-          </li>
-          <li>
-            If |LeftHandSideExpression| is neither an |ObjectLiteral| nor an |ArrayLiteral|, it is a Syntax Error if AssignmentTargetType of |LeftHandSideExpression| is not ~simple~.
-          </li>
-        </ul>
-      </emu-clause>
 
       <emu-clause id="sec-runtime-semantics-iteratordestructuringassignmentevaluation" type="sdo" number="5">
         <h1>
@@ -621,7 +739,7 @@ contributors: Ron Buckton, Ecma International
         </emu-alg>
         <emu-grammar>AssignmentElement : DestructuringAssignmentTarget Initializer?</emu-grammar>
         <emu-alg>
-          1. If |DestructuringAssignmentTarget| is neither an |ObjectLiteral|<del> nor</del><ins>, </ins> an |ArrayLiteral|<ins>, nor `void`</ins>, then
+          1. If |DestructuringAssignmentTarget| is neither an |ObjectLiteral| nor an |ArrayLiteral|, then
             1. Let _lref_ be ? Evaluation of |DestructuringAssignmentTarget|.
           1. Let _value_ be *undefined*.
           1. If _iteratorRecord_.[[Done]] is *false*, then
@@ -639,16 +757,22 @@ contributors: Ron Buckton, Ecma International
           1. If |DestructuringAssignmentTarget| is either an |ObjectLiteral| or an |ArrayLiteral|, then
             1. Let _nestedAssignmentPattern_ be the |AssignmentPattern| that is covered by |DestructuringAssignmentTarget|.
             1. Return ? DestructuringAssignmentEvaluation of _nestedAssignmentPattern_ with argument _v_.
-          1. <ins>If |DestructuringAssignmentTarget| is `void`, then</ins>
-            1. <ins>Return ~unused~.</ins>
           1. Return ? PutValue(_lref_, _v_).
         </emu-alg>
         <emu-note>
           <p>Left to right evaluation order is maintained by evaluating a |DestructuringAssignmentTarget| that is not a destructuring pattern prior to accessing the iterator or evaluating the |Initializer|.</p>
         </emu-note>
+        <ins class="block">
+        <emu-grammar>AssignmentElement : `void`</emu-grammar>
+        <emu-alg>
+          1. If _iteratorRecord_.[[Done]] is *false*, then
+            1. Perform ? IteratorStepValue(_iteratorRecord_).
+          1. Return ~unused~.
+        </emu-alg>
+        </ins>
         <emu-grammar>AssignmentRestElement : `...` DestructuringAssignmentTarget</emu-grammar>
         <emu-alg>
-          1. If |DestructuringAssignmentTarget| is neither an |ObjectLiteral|<del> nor</del><ins>, </ins> an |ArrayLiteral|<ins>, nor `void`</ins>, then
+          1. If |DestructuringAssignmentTarget| is neither an |ObjectLiteral| nor an |ArrayLiteral|, then
             1. Let _lref_ be ? Evaluation of |DestructuringAssignmentTarget|.
           1. Let _A_ be ! ArrayCreate(0).
           1. Let _n_ be 0.
@@ -657,16 +781,10 @@ contributors: Ron Buckton, Ecma International
             1. If _next_ is not ~done~, then
               1. Perform ! CreateDataPropertyOrThrow(_A_, ! ToString(𝔽(_n_)), _next_).
               1. Set _n_ to _n_ + 1.
-          1. <del>If |DestructuringAssignmentTarget| is neither an |ObjectLiteral| nor an |ArrayLiteral|, then</del>
-            1. <del>Return ? PutValue(_lref_, _A_).</del>
-          1. <del>Let _nestedAssignmentPattern_ be the |AssignmentPattern| that is covered by |DestructuringAssignmentTarget|.</del>
-          1. <del>Return ? DestructuringAssignmentEvaluation of _nestedAssignmentPattern_ with argument _A_.</del>
-          1. <ins>If |DestructuringAssignmentTarget| is either an |ObjectLiteral| or an |ArrayLiteral|, then</del>
-            1. <ins>Let _nestedAssignmentPattern_ be the |AssignmentPattern| that is covered by |DestructuringAssignmentTarget|.</ins>
-            1. <ins>Return ? DestructuringAssignmentEvaluation of _nestedAssignmentPattern_ with argument _A_.</ins>
-          1. <ins>If |DestructuringAssignmentTarget| is `void`, then</ins>
-            1. <ins>Return ~unused~.</ins>
-          1. <ins>Return ? PutValue(_lref_, _A_).</ins>
+          1. If |DestructuringAssignmentTarget| is neither an |ObjectLiteral| nor an |ArrayLiteral|, then
+            1. Return ? PutValue(_lref_, _A_).
+          1. Let _nestedAssignmentPattern_ be the |AssignmentPattern| that is covered by |DestructuringAssignmentTarget|.
+          1. Return ? DestructuringAssignmentEvaluation of _nestedAssignmentPattern_ with argument _A_.
         </emu-alg>
       </emu-clause>
 
@@ -681,7 +799,7 @@ contributors: Ron Buckton, Ecma International
         </dl>
         <emu-grammar>AssignmentElement : DestructuringAssignmentTarget Initializer?</emu-grammar>
         <emu-alg>
-          1. If |DestructuringAssignmentTarget| is neither an |ObjectLiteral| nor an |ArrayLiteral|<ins> nor `void`</ins>, then
+          1. If |DestructuringAssignmentTarget| is neither an |ObjectLiteral| nor an |ArrayLiteral|, then
             1. Let _lref_ be ? Evaluation of |DestructuringAssignmentTarget|.
           1. Let _v_ be ? GetV(_value_, _propertyName_).
           1. If |Initializer| is present and _v_ is *undefined*, then
@@ -695,10 +813,14 @@ contributors: Ron Buckton, Ecma International
           1. If |DestructuringAssignmentTarget| is either an |ObjectLiteral| or an |ArrayLiteral|, then
             1. Let _assignmentPattern_ be the |AssignmentPattern| that is covered by |DestructuringAssignmentTarget|.
             1. Return ? DestructuringAssignmentEvaluation of _assignmentPattern_ with argument _rhsValue_.
-          1. <ins>If |DestructuringAssignmentTarget| is `void`, then</ins>
-            1. <ins>Return ~unused~.</ins>
           1. Return ? PutValue(_lref_, _rhsValue_).
         </emu-alg>
+        <ins class="block">
+        <emu-grammar>AssignmentElement : `void`</emu-grammar>
+        <emu-alg>
+          1. Return ~unused~.
+        </emu-alg>
+        </ins>
       </emu-clause>
     </emu-clause>
   </emu-clause>
@@ -734,7 +856,7 @@ contributors: Ron Buckton, Ecma International
 
         LexicalBinding[In, Yield, Await, Pattern] :
           BindingIdentifier[?Yield, ?Await] Initializer[?In, ?Yield, ?Await]?
-          [+Pattern] BindingPattern[?Yield, ?Await, <ins>~Void</ins>] Initializer[?In, ?Yield, ?Await]
+          [+Pattern] BindingPattern[?Yield, ?Await] Initializer[?In, ?Yield, ?Await]
           <ins>[~Pattern] `void` Initializer[?In, ?Yield, ?Await]</ins>
       </emu-grammar>
 
@@ -773,18 +895,6 @@ contributors: Ron Buckton, Ecma International
           1. Perform ? InitializeReferencedBinding(_lhs_, _value_, _hint_).
           1. Return ~unused~.
         </emu-alg>
-        <ins class="block">
-        <emu-grammar>LexicalBinding : `void` Initializer</emu-grammar>
-        <emu-alg>
-          1. Assert: _hint_ is not ~normal~.
-          1. Let _env_ be the running execution context's LexicalEnvironment.
-          1. Assert: _env_ is an Environment Record.
-          1. Let _rhs_ be ? Evaluation of |Initializer|.
-          1. Let _value_ be ? GetValue(_rhs_).
-          1. Perform ? AddDisposableResource(_env_.[[DisposeCapability]], _value_, _hint_).
-          1. Return ~unused~.
-        </emu-alg>
-        </ins>
         <emu-grammar>LexicalBinding : BindingPattern Initializer</emu-grammar>
         <emu-alg>
           1. Assert: _hint_ is ~normal~.
@@ -793,34 +903,28 @@ contributors: Ron Buckton, Ecma International
           1. Let _env_ be the running execution context's LexicalEnvironment.
           1. Return ? BindingInitialization of |BindingPattern| with arguments _value_ and _env_.
         </emu-alg>
-      </emu-clause>
-    </emu-clause>
-
-    <emu-clause id="sec-variable-statement" number="2">
-      <h1>Variable Statement</h1>
-      <h2>Syntax</h2>
-      <emu-grammar type="definition">
-        VariableStatement[Yield, Await] :
-          `var` VariableDeclarationList[+In, ?Yield, ?Await] `;`
-
-        VariableDeclarationList[In, Yield, Await] :
-          VariableDeclaration[?In, ?Yield, ?Await]
-          VariableDeclarationList[?In, ?Yield, ?Await] `,` VariableDeclaration[?In, ?Yield, ?Await]
-
-        VariableDeclaration[In, Yield, Await] :
-          BindingIdentifier[?Yield, ?Await] Initializer[?In, ?Yield, ?Await]?
-          BindingPattern[?Yield, ?Await, <ins>~Void</ins>] Initializer[?In, ?Yield, ?Await]
-      </emu-grammar>
+        <ins class="block">
+          <emu-grammar>LexicalBinding : `void` Initializer</emu-grammar>
+          <emu-alg>
+            1. Assert: _hint_ is not ~normal~.
+            1. Let _env_ be the running execution context's LexicalEnvironment.
+            1. Assert: _env_ is an Environment Record.
+            1. Let _rhs_ be ? Evaluation of |Initializer|.
+            1. Let _value_ be ? GetValue(_rhs_).
+            1. Perform ? AddDisposableResource(_env_.[[DisposeCapability]], _value_, _hint_).
+            1. Return ~unused~.
+          </emu-alg>
+          </ins>
+        </emu-clause>
     </emu-clause>
 
     <emu-clause id="sec-destructuring-binding-patterns" number="3">
       <h1>Destructuring Binding Patterns</h1>
       <h2>Syntax</h2>
       <emu-grammar type="definition">
-        BindingPattern[Yield, Await, <ins>Void</ins>] :
+        BindingPattern[Yield, Await] :
           ObjectBindingPattern[?Yield, ?Await]
           ArrayBindingPattern[?Yield, ?Await]
-          <ins>[+Void] `void`</ins>
 
         ObjectBindingPattern[Yield, Await] :
           `{` `}`
@@ -853,14 +957,15 @@ contributors: Ron Buckton, Ecma International
 
         BindingElement[Yield, Await] :
           SingleNameBinding[?Yield, ?Await]
-          BindingPattern[?Yield, ?Await, <ins>+Void</ins>] Initializer[+In, ?Yield, ?Await]?
+          BindingPattern[?Yield, ?Await] Initializer[+In, ?Yield, ?Await]?
+          <ins>`void`</ins>
 
         SingleNameBinding[Yield, Await] :
           BindingIdentifier[?Yield, ?Await] Initializer[+In, ?Yield, ?Await]?
 
         BindingRestElement[Yield, Await] :
           `...` BindingIdentifier[?Yield, ?Await]
-          `...` BindingPattern[?Yield, ?Await, <ins>+Void</ins>]
+          `...` BindingPattern[?Yield, ?Await]
       </emu-grammar>
     </emu-clause>
   </emu-clause>
