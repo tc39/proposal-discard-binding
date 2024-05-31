@@ -25,7 +25,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           url=(gh api "repos/$GITHUB_REPOSITORY/pages" --jq '.html_url')
-          echo "preview-url=https://tc39.es/$(basename $GITHUB_REPOSITORY)pr/${{ github.event.number }}" >> "$GITHUB_OUTPUT"
+          echo "preview-url=https://tc39.es/$(basename $GITHUB_REPOSITORY)/pr/${{ github.event.number }}" >> "$GITHUB_OUTPUT"
         shell: bash
       - name: Post Preview Comment
         uses: phulsechinmay/rewritable-pr-comment@v0.3.0
