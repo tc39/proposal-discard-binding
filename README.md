@@ -170,6 +170,8 @@ parameters:
 ```js
 doWork((_, a, _1, _2, b) => {});
 // vs.
+doWork((...[, a, , , b]) => {});
+// vs.
 doWork((void, a, void, void, b) => {
 });
 ```
