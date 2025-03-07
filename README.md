@@ -5,7 +5,7 @@ _BindingIdentifier_ or _Elision_ in numerous constructs.
 
 ## Status
 
-**Stage:** 1  \
+**Stage:** 2  \
 **Champion:** Ron Buckton (@rbuckton)  \
 **Last Presented:** (none)
 
